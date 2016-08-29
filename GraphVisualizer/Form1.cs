@@ -13,6 +13,7 @@ namespace GraphVisualizer
 {
     public partial class Form1 : Form
     {
+        int scaleFactor = 1;
         List<Edge> edges = new List<Edge>();
         Dictionary<int, Node> nodes = new Dictionary<int, Node>();
         int panelX = 0;
@@ -37,6 +38,7 @@ namespace GraphVisualizer
             public int endY;
             public int Weight;
             public int Order;
+            public bool Show;
         }
 
         public Form1()
@@ -48,6 +50,45 @@ namespace GraphVisualizer
             panel1.AutoSize = true;
             panel1.MouseDown += panel1_MouseDown;
             panel1.MouseUp += panel1_MouseUp;
+            panel1.MouseDoubleClick += panel1_MouseDoubleClick;
+
+        }
+
+        int GetNodeIdFromPoint(int x,int y)
+        {
+            Rectangle r = new Rectangle(x, y, 5, 5);
+            int nodeId = -1;
+
+            foreach (var node in nodes)
+            {
+                Rectangle nodeR = new Rectangle(node.Value.x, node.Value.y, 20, 20);
+                if (nodeR.IntersectsWith(r))
+                {
+                    nodeId = node.Key;
+                }
+            }
+            return nodeId;
+        }
+
+        void panel1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            int nodeId = GetNodeIdFromPoint(e.X, e.Y);
+            if (nodeId != -1)
+            {
+                for (int i = 0; i < edges.Count(); i++)
+                {
+                    var el = edges[i];
+                    if (el.nodeS == nodeId)
+                    {
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = e.X, startY = e.Y, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = !el.Show };
+                    }
+                    else if (el.nodeE == nodeId)
+                    {
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = e.X, endY = e.Y, Weight = el.Weight, Order = el.Order, Show = !el.Show };
+                    }
+                }
+            }
+            panel1.Invalidate();
         }
 
 
@@ -62,11 +103,11 @@ namespace GraphVisualizer
                     var el = edges[i];
                     if (el.nodeS == draggedNodeKey)
                     {
-                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = e.X, startY = e.Y, endX = el.endX, endY = el.endY, Weight = el.Weight,Order=el.Order };
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = e.X, startY = e.Y, endX = el.endX, endY = el.endY, Weight = el.Weight,Order=el.Order,Show=el.Show };
                     }
                     else if (el.nodeE == draggedNodeKey)
                     {
-                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = e.X, endY = e.Y, Weight = el.Weight,Order=el.Order };
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = e.X, endY = e.Y, Weight = el.Weight, Order = el.Order, Show = el.Show };
                     }
                 }
 
@@ -94,8 +135,8 @@ namespace GraphVisualizer
         protected void DrawNodeWithText(PaintEventArgs e, string number,int x,int y)
         {
             int size = 20;
-            e.Graphics.DrawEllipse(new Pen(Color.Black), new Rectangle(new Point(x,y), new Size(size, size)));
-            e.Graphics.DrawString(number, new Font(new FontFamily("Times New Roman"), size - 10), new SolidBrush(Color.Red), new Point(x,y));
+            e.Graphics.DrawEllipse(new Pen(Color.Black), new Rectangle(new Point(x,y), new Size(size * scaleFactor, size * scaleFactor)));
+            e.Graphics.DrawString(number, new Font(new FontFamily("Times New Roman"), (size * scaleFactor) - (10*scaleFactor)), new SolidBrush(Color.Red), new Point(x, y));
         }
 
         protected void DrawEdge(PaintEventArgs e,int node1X,int node1Y,int node2X,int node2Y,int weight,int order)
@@ -188,12 +229,12 @@ namespace GraphVisualizer
                 int eY = nodes[v2].y;
 
                 int edgeOrder = edges.Count(ed => (ed.nodeS == v1 && ed.nodeE == v2) || (ed.nodeS == v2 && ed.nodeE == v1));
-                edges.Add(new Edge() { nodeS=v1,nodeE=v2, Weight=w,startX=sX,startY=sY,endX=eX,endY=eY,Order = edgeOrder + 1 });
-               
+                edges.Add(new Edge() { nodeS=v1,nodeE=v2, Weight=w,startX=sX,startY=sY,endX=eX,endY=eY,Order = edgeOrder + 1,Show=false });
+                edges.Add(new Edge() { nodeS = v2, nodeE = v1, Weight = w, startX = eX, startY = eY, endX = sX, endY = sY, Order = edgeOrder + 2, Show = false });
 
             }
 
-
+            PrintDistances(edges, 1, 28);
             panel1.Invalidate();
 
             
@@ -209,8 +250,11 @@ namespace GraphVisualizer
             }
 
             foreach (var edge in edges)
-            {                
-                DrawEdge(e, edge.startX, edge.startY, edge.endX, edge.endY, edge.Weight,edge.Order);
+            {
+                if (edge.Show)
+                {
+                    DrawEdge(e, edge.startX, edge.startY, edge.endX, edge.endY, edge.Weight, edge.Order);
+                }
             }
 
         }
@@ -223,6 +267,80 @@ namespace GraphVisualizer
             bitmap.Save(@"C:\temp\graph.jpg");
         }
 
+        private void zoomInButton_Click(object sender, EventArgs e)
+        {
+            scaleFactor += 1;
+            //panel1.Scale(scaleFactor);
+            panel1.Invalidate();
+        }
+
+        private void zoomOutButton_Click(object sender, EventArgs e)
+        {
+            scaleFactor -= 1;
+            //panel1.Scale(scaleFactor);  
+            panel1.Invalidate();
+        }
+
+        void PrintDistances(List<Edge> al, int s, int vCount)
+        {
+            Dictionary<int, int> nodeDistances = new Dictionary<int, int>(vCount);
+            for (int i = 1; i <= vCount; i++)
+            {
+                nodeDistances.Add(i, -1);
+            }
+            nodeDistances[s] = 0;
+
+            Queue<int> currentLQueue = new Queue<int>(vCount);
+            currentLQueue.Enqueue(s);
+
+            Dictionary<int, int> alreadyVisited = new Dictionary<int, int>(vCount) { };
+            while (currentLQueue.Count > 0)
+            {
+                int node = currentLQueue.Dequeue();                
+                var neigbours = al.Where(e => e.nodeS == node).ToArray().ToList();
+                foreach (var v in neigbours)
+                {
+                    // if node is not visisted yet
+                    if (!alreadyVisited.ContainsKey(v.nodeE))
+                    {
+                        currentLQueue.Enqueue(v.nodeE); // Add to queue for it to be visited
+                    }
+                    // if distance is never set for this node, then set it to edge weight.
+                    if (nodeDistances[v.nodeE] == -1)
+                    {
+                        nodeDistances[v.nodeE] = nodeDistances[node] + v.Weight;
+                        UpdateEdge(node, v.nodeE);
+                    }
+                    // else if weight is set before, now update if new distance is shorter.
+                    if (nodeDistances[v.nodeE] > nodeDistances[node] + v.Weight)
+                    {
+                        nodeDistances[v.nodeE] = nodeDistances[node] + v.Weight;
+                        UpdateEdge(node, v.nodeE);
+                    }
+                }
+
+                if (!alreadyVisited.ContainsKey(node))
+                {
+                    alreadyVisited.Add(node, 0); // Set Node as Visited since all edges processed
+                }
+            }
+        }
+
+        void UpdateEdge(int start,int end)
+        {
+            for (int i = 0; i < edges.Count(); i++)
+            {
+                var el = edges[i];
+                if (edges[i].nodeS == start && edges[i].nodeE == end)
+                {
+                    edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = true };
+                }
+                else if (edges[i].nodeS == start && edges[i].nodeE != end)
+                {
+                    edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = false };
+                }
+            }
+        }
 
 
     }
