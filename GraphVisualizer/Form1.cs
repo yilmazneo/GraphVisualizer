@@ -41,11 +41,9 @@ namespace GraphVisualizer
         public Form1()
         {
             InitializeComponent();
-
-            InitializeGraph();
+            
             panel1.AutoScroll = true;
-            panel1.HorizontalScroll.Enabled = true;
-            //panel1.AutoScrollMinSize = new System.Drawing.Size(2000, 2000);
+            panel1.HorizontalScroll.Enabled = true;            
             panel1.AutoSize = true;
             panel1.MouseDown += panel1_MouseDown;
             panel1.MouseUp += panel1_MouseUp;
@@ -89,21 +87,6 @@ namespace GraphVisualizer
                     draggedNodeKey = node.Key;
                 }
             }
-        }
-
-        private void InitializeGraph()
-        {
-            //edges.Add(1, new Edge() { To=2,Weight=10});
-
-        }
-
-
-        protected override void OnPaint(PaintEventArgs e)
-        {            
-            //DrawNodeWithText(e, "1", 0,0);
-            //DrawNodeWithText(e, "2", 80,0);
-            //DrawNodeWithText(e, "3", 100,0);
-            //DrawEdge(e, 30,15, 80,15,10);
         }
 
         protected void DrawNodeWithText(PaintEventArgs e, string number,int x,int y)
