@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -48,6 +49,7 @@ namespace GraphVisualizer
             panel1.MouseDown += panel1_MouseDown;
             panel1.MouseUp += panel1_MouseUp;
         }
+
 
         void panel1_MouseUp(object sender, MouseEventArgs e)
         {
@@ -102,88 +104,99 @@ namespace GraphVisualizer
             e.Graphics.DrawString( "(" + weight.ToString() + ")", new Font(new FontFamily("Times New Roman"), 10), new SolidBrush(Color.DarkBlue), new Point(((node1X + node2X) / 2) + (30 * (order-1)), (node1Y + node2Y) / 2));
         }
 
+
+        public void PopulateNodes(int numberOfNodes)
+        {
+            nodes.Clear();
+
+            int spaceInBetween = 300;
+            int n = numberOfNodes / 4;
+            int currentX = 500;
+            int currentY = 500;
+            
+            for (int i = 1; i <= numberOfNodes; i++)
+            {
+                if (i <= n)
+                {
+                    nodes.Add(i, new Node() { x = currentX, y = currentY });
+                    currentX += spaceInBetween;
+                    if (i == n)
+                    {
+                        panelX = currentX + spaceInBetween;
+                        currentY += spaceInBetween;
+                    }
+                }
+                else if (i <= 2 * n)
+                {
+                    nodes.Add(i, new Node() { x = currentX, y = currentY });
+                    currentY += spaceInBetween;
+                    if (i == (2 * n))
+                    {
+                        panelY = currentY;
+                        currentX -= spaceInBetween;
+                    }
+                }
+                else if (i <= (3 * n))
+                {
+                    nodes.Add(i, new Node() { x = currentX, y = currentY });
+                    currentX -= spaceInBetween;
+                    if (i == 3 * n)
+                    {
+                        currentY -= spaceInBetween;
+                        //currentX -= spaceInBetween;
+                    }
+                }
+                else
+                {
+                    nodes.Add(i, new Node() { x = currentX, y = currentY });                    
+                    currentY -= spaceInBetween;
+                }
+                
+            }
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             edges.Clear();
-            nodes.Clear();
             string graphMetaData = graphInput.Text;
             string[] lines = graphMetaData.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
 
-            int currentX = 330;
-            int currentY = 400;
-            int increment = 100;
             panelX = 0;
             panelY = 0;
 
             int count = 0;
+            bool executed = false;
             foreach (string line in lines)
             {
-                count++;
-
-                if (count % 2 == 0)
+                if (!executed)
                 {
-                    currentY += 200;
-                    currentX = 330;
+                    PopulateNodes(int.Parse(line));
+                    executed = true;
+                    continue;
                 }
+
+                count++;
 
                 string eMetaData = Console.ReadLine();
                 int v1 = int.Parse(line.Split(new char[] { ' ' })[0]);
                 int v2 = int.Parse(line.Split(new char[] { ' ' })[1]);
                 int w = int.Parse(line.Split(new char[] { ' ' })[2]);
 
-                int sX = 0;
-                int sY = 0;
-                int eX = 0;
-                int eY = 0;
-
-                if (!nodes.ContainsKey(v1))
-                {
-                    currentX += increment;
-                    //currentY = count % 2 == 0 ? currentY + 200 : currentY - 200;
-                    sX = currentX + 15;
-                    sY = currentY + 15;
-                    nodes.Add(v1, new Node() { x = currentX, y = currentY });
-                }
-                else
-                {
-                    sX = nodes[v1].x + 15;
-                    sY = nodes[v1].y + 15;
-                }
-
-                if (!nodes.ContainsKey(v2))
-                {
-                    currentX += increment;
-                    //currentY = count % 2 == 0 ? currentY + 200 : currentY - 200;
-                    eX = currentX + 15;
-                    eY = currentY + 15;
-                    nodes.Add(v2, new Node() { x = currentX, y = currentY });
-                }
-                else
-                {
-                    eX = nodes[v2].x + 15;
-                    eY = nodes[v2].y + 15;
-                }
+                int sX = nodes[v1].x;
+                int sY = nodes[v1].y;
+                int eX = nodes[v2].x;
+                int eY = nodes[v2].y;
 
                 int edgeOrder = edges.Count(ed => (ed.nodeS == v1 && ed.nodeE == v2) || (ed.nodeS == v2 && ed.nodeE == v1));
                 edges.Add(new Edge() { nodeS=v1,nodeE=v2, Weight=w,startX=sX,startY=sY,endX=eX,endY=eY,Order = edgeOrder + 1 });
-
-
-                
-                if (panelX < currentX)
-                {
-                    panelX = currentX;
-                }
-
-                if (panelY < currentY)
-                {
-                    panelY = currentY;
-                }
+               
 
             }
 
 
             panel1.Invalidate();
 
+            
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
@@ -200,6 +213,14 @@ namespace GraphVisualizer
                 DrawEdge(e, edge.startX, edge.startY, edge.endX, edge.endY, edge.Weight,edge.Order);
             }
 
+        }
+
+        private void saveButton_Click(object sender, EventArgs e)
+        {
+            Bitmap bitmap = new Bitmap(panel1.Size.Width, panel1.Size.Height);
+            Rectangle bounds = new Rectangle(new Point(0, 0), panel1.Size);
+            panel1.DrawToBitmap(bitmap, bounds);
+            bitmap.Save(@"C:\temp\graph.jpg");
         }
 
 
