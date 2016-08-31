@@ -234,7 +234,7 @@ namespace GraphVisualizer
 
             }
 
-            PrintDistances(edges, 1, 28);
+            PrintDistances(edges, 1, 28,19);
             panel1.Invalidate();
 
             
@@ -281,8 +281,9 @@ namespace GraphVisualizer
             panel1.Invalidate();
         }
 
-        void PrintDistances(List<Edge> al, int s, int vCount)
+        void PrintDistances(List<Edge> al, int s, int vCount,int stopNode)
         {
+            Dictionary<int, int> shortestPath = new Dictionary<int, int>();
             Dictionary<int, int> nodeDistances = new Dictionary<int, int>(vCount);
             for (int i = 1; i <= vCount; i++)
             {
@@ -297,7 +298,7 @@ namespace GraphVisualizer
             while (currentLQueue.Count > 0)
             {
                 int node = currentLQueue.Dequeue();                
-                var neigbours = al.Where(e => e.nodeS == node).ToArray().ToList();
+                var neigbours = al.Where(e => e.nodeS == node).OrderBy(e => e.Weight).ToList();
                 foreach (var v in neigbours)
                 {
                     // if node is not visisted yet
@@ -309,19 +310,47 @@ namespace GraphVisualizer
                     if (nodeDistances[v.nodeE] == -1)
                     {
                         nodeDistances[v.nodeE] = nodeDistances[node] + v.Weight;
-                        UpdateEdge(node, v.nodeE);
+                        if (shortestPath.ContainsKey(v.nodeE))
+                        {
+                            shortestPath[v.nodeE] = node;
+                        }
+                        else
+                        {
+                            shortestPath.Add(v.nodeE, node);
+                        }
                     }
                     // else if weight is set before, now update if new distance is shorter.
                     if (nodeDistances[v.nodeE] > nodeDistances[node] + v.Weight)
                     {
                         nodeDistances[v.nodeE] = nodeDistances[node] + v.Weight;
-                        UpdateEdge(node, v.nodeE);
+                        if (shortestPath.ContainsKey(v.nodeE))
+                        {
+                            shortestPath[v.nodeE] = node;
+                        }
+                        else
+                        {
+                            shortestPath.Add(v.nodeE, node);
+                        }
                     }
                 }
 
                 if (!alreadyVisited.ContainsKey(node))
                 {
                     alreadyVisited.Add(node, 0); // Set Node as Visited since all edges processed
+                }
+
+                if (node == stopNode)
+                {
+                    int previous = -1;
+                    int x = stopNode;
+                    while (shortestPath[x] != s)
+                    {
+                        previous = shortestPath[x];
+                        UpdateEdge(previous, x);
+                        x = previous;
+                    }
+                    UpdateEdge(previous, s);
+                    return;
                 }
             }
         }
@@ -334,10 +363,6 @@ namespace GraphVisualizer
                 if (edges[i].nodeS == start && edges[i].nodeE == end)
                 {
                     edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = true };
-                }
-                else if (edges[i].nodeS == start && edges[i].nodeE != end)
-                {
-                    edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = false };
                 }
             }
         }
