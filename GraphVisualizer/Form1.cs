@@ -39,6 +39,8 @@ namespace GraphVisualizer
             public int Weight;
             public int Order;
             public bool Show;
+            public Color color;
+            public Color weightColor;
         }
 
         public Form1()
@@ -76,15 +78,15 @@ namespace GraphVisualizer
             if (nodeId != -1)
             {
                 for (int i = 0; i < edges.Count(); i++)
-                {
+                { 
                     var el = edges[i];
                     if (el.nodeS == nodeId)
                     {
-                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = e.X, startY = e.Y, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = !el.Show };
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = e.X, startY = e.Y, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = !el.Show,color=Color.LightBlue,weightColor=Color.DarkBlue };
                     }
                     else if (el.nodeE == nodeId)
                     {
-                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = e.X, endY = e.Y, Weight = el.Weight, Order = el.Order, Show = !el.Show };
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = e.X, endY = e.Y, Weight = el.Weight, Order = el.Order, Show = !el.Show,color=Color.LightBlue,weightColor=Color.DarkBlue };
                     }
                 }
             }
@@ -103,11 +105,11 @@ namespace GraphVisualizer
                     var el = edges[i];
                     if (el.nodeS == draggedNodeKey)
                     {
-                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = e.X, startY = e.Y, endX = el.endX, endY = el.endY, Weight = el.Weight,Order=el.Order,Show=el.Show };
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = e.X, startY = e.Y, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = el.Show, color = Color.LightBlue, weightColor = Color.DarkBlue };
                     }
                     else if (el.nodeE == draggedNodeKey)
                     {
-                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = e.X, endY = e.Y, Weight = el.Weight, Order = el.Order, Show = el.Show };
+                        edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = e.X, endY = e.Y, Weight = el.Weight, Order = el.Order, Show = el.Show, color = Color.LightBlue, weightColor = Color.DarkBlue };
                     }
                 }
 
@@ -139,10 +141,10 @@ namespace GraphVisualizer
             e.Graphics.DrawString(number, new Font(new FontFamily("Times New Roman"), (size * scaleFactor) - (10*scaleFactor)), new SolidBrush(Color.Red), new Point(x, y));
         }
 
-        protected void DrawEdge(PaintEventArgs e,int node1X,int node1Y,int node2X,int node2Y,int weight,int order)
+        protected void DrawEdge(PaintEventArgs e, int node1X, int node1Y, int node2X, int node2Y, int weight, int order, Color edgeColor, Color weightColor)
         {
-            e.Graphics.DrawLine(new Pen(Color.RoyalBlue), new Point(node1X, node1Y), new Point(node2X, node2Y));            
-            e.Graphics.DrawString( "(" + weight.ToString() + ")", new Font(new FontFamily("Times New Roman"), 10), new SolidBrush(Color.DarkBlue), new Point(((node1X + node2X) / 2) + (30 * (order-1)), (node1Y + node2Y) / 2));
+            e.Graphics.DrawLine(new Pen(edgeColor), new Point(node1X, node1Y), new Point(node2X, node2Y));
+            e.Graphics.DrawString("(" + weight.ToString() + ")", new Font(new FontFamily("Times New Roman"), 10), new SolidBrush(weightColor), new Point(((node1X + node2X) / 2) + (30 * (order - 1)), (node1Y + node2Y) / 2));
         }
 
 
@@ -229,12 +231,11 @@ namespace GraphVisualizer
                 int eY = nodes[v2].y;
 
                 int edgeOrder = edges.Count(ed => (ed.nodeS == v1 && ed.nodeE == v2) || (ed.nodeS == v2 && ed.nodeE == v1));
-                edges.Add(new Edge() { nodeS=v1,nodeE=v2, Weight=w,startX=sX,startY=sY,endX=eX,endY=eY,Order = edgeOrder + 1,Show=false });
-                edges.Add(new Edge() { nodeS = v2, nodeE = v1, Weight = w, startX = eX, startY = eY, endX = sX, endY = sY, Order = edgeOrder + 2, Show = false });
+                edges.Add(new Edge() { nodeS=v1,nodeE=v2, Weight=w,startX=sX,startY=sY,endX=eX,endY=eY,Order = edgeOrder + 1,Show=allEdgesCheckBox.Checked,color=Color.LightBlue,weightColor=Color.DarkBlue });
+                edges.Add(new Edge() { nodeS = v2, nodeE = v1, Weight = w, startX = eX, startY = eY, endX = sX, endY = sY, Order = edgeOrder + 2, Show = allEdgesCheckBox.Checked, color = Color.LightBlue, weightColor = Color.DarkBlue });
 
             }
 
-            PrintDistances(edges, 1, 28,19);
             panel1.Invalidate();
 
             
@@ -253,7 +254,7 @@ namespace GraphVisualizer
             {
                 if (edge.Show)
                 {
-                    DrawEdge(e, edge.startX, edge.startY, edge.endX, edge.endY, edge.Weight, edge.Order);
+                    DrawEdge(e, edge.startX, edge.startY, edge.endX, edge.endY, edge.Weight, edge.Order,edge.color,edge.weightColor);
                 }
             }
 
@@ -284,59 +285,41 @@ namespace GraphVisualizer
         void PrintDistances(List<Edge> al, int s, int vCount,int stopNode)
         {
             Dictionary<int, int> shortestPath = new Dictionary<int, int>();
-            Dictionary<int, int> nodeDistances = new Dictionary<int, int>(vCount);
+            int[] nodeDistances = new int[vCount + 1];
+            HeapNode[] distances = new HeapNode[vCount];
             for (int i = 1; i <= vCount; i++)
             {
-                nodeDistances.Add(i, -1);
+                nodeDistances[i] = int.MaxValue;
+                distances[i - 1] = new HeapNode() { Index = i, Distance = int.MaxValue };
             }
             nodeDistances[s] = 0;
+            distances[s - 1] = new HeapNode() { Index = s, Distance = 0 };
 
-            Queue<int> currentLQueue = new Queue<int>(vCount);
-            currentLQueue.Enqueue(s);
-
-            Dictionary<int, int> alreadyVisited = new Dictionary<int, int>(vCount) { };
-            while (currentLQueue.Count > 0)
+            Heap h = new Heap(distances);
+            
+            while (h.size > 0)
             {
-                int node = currentLQueue.Dequeue();                
-                var neigbours = al.Where(e => e.nodeS == node).OrderBy(e => e.Weight).ToList();
-                foreach (var v in neigbours)
+                int node = h.Delete();
+                var adjacentNodes = al.Where(e => e.nodeS == node).ToList();
+                foreach (var v in adjacentNodes)
                 {
-                    // if node is not visisted yet
-                    if (!alreadyVisited.ContainsKey(v.nodeE))
+                    if (h.IsInHeap(v.nodeE) && nodeDistances[node] != int.MaxValue)
                     {
-                        currentLQueue.Enqueue(v.nodeE); // Add to queue for it to be visited
-                    }
-                    // if distance is never set for this node, then set it to edge weight.
-                    if (nodeDistances[v.nodeE] == -1)
-                    {
-                        nodeDistances[v.nodeE] = nodeDistances[node] + v.Weight;
-                        if (shortestPath.ContainsKey(v.nodeE))
+                        int weight = nodeDistances[node] + v.Weight;
+                        if (nodeDistances[v.nodeE] > weight)
                         {
-                            shortestPath[v.nodeE] = node;
-                        }
-                        else
-                        {
-                            shortestPath.Add(v.nodeE, node);
-                        }
-                    }
-                    // else if weight is set before, now update if new distance is shorter.
-                    if (nodeDistances[v.nodeE] > nodeDistances[node] + v.Weight)
-                    {
-                        nodeDistances[v.nodeE] = nodeDistances[node] + v.Weight;
-                        if (shortestPath.ContainsKey(v.nodeE))
-                        {
-                            shortestPath[v.nodeE] = node;
-                        }
-                        else
-                        {
-                            shortestPath.Add(v.nodeE, node);
+                            nodeDistances[v.nodeE] = weight;
+                            h.DecreaseKey(v.nodeE, weight);
+                            if (shortestPath.ContainsKey(v.nodeE))
+                            {
+                                shortestPath[v.nodeE] = node;
+                            }
+                            else
+                            {
+                                shortestPath.Add(v.nodeE, node);
+                            }
                         }
                     }
-                }
-
-                if (!alreadyVisited.ContainsKey(node))
-                {
-                    alreadyVisited.Add(node, 0); // Set Node as Visited since all edges processed
                 }
 
                 if (node == stopNode)
@@ -349,10 +332,12 @@ namespace GraphVisualizer
                         UpdateEdge(previous, x);
                         x = previous;
                     }
-                    UpdateEdge(previous, s);
+                    UpdateEdge(previous == -1 ? stopNode : previous, s);
                     return;
                 }
+
             }
+
         }
 
         void UpdateEdge(int start,int end)
@@ -362,11 +347,137 @@ namespace GraphVisualizer
                 var el = edges[i];
                 if (edges[i].nodeS == start && edges[i].nodeE == end)
                 {
-                    edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = true };
+                    edges[i] = new Edge() { nodeS = el.nodeS, nodeE = el.nodeE, startX = el.startX, startY = el.startY, endX = el.endX, endY = el.endY, Weight = el.Weight, Order = el.Order, Show = true, color = Color.LimeGreen, weightColor = Color.DarkOliveGreen };
                 }
             }
         }
 
+        private void shortestPathButton_Click(object sender, EventArgs e)
+        {
+            if (edges != null && edges.Count > 0)
+            {
+                int start = int.Parse(fromTextBox.Text);
+                int end = int.Parse(toTextBox.Text);
+                PrintDistances(edges, start, nodes.Count, end);
+                panel1.Invalidate();
+            }
+        }
 
     }
+
+
+
+    struct HeapNode
+    {
+        public int Index { get; set; } // vertex number
+        public int Distance { get; set; }
+    }
+
+    class Heap
+    {
+        HeapNode[] numbers;
+        public int size { get; set; }
+        int[] positions;
+
+        public Heap(HeapNode[] numbers)
+        {
+            this.numbers = numbers;
+            size = numbers.Length;
+            positions = new int[numbers.Length + 1];
+            Initialize();
+        }
+
+        public void Initialize()
+        {
+            for (int i = 1; i < size; i++)
+            {
+                int newNodeIndex = i;
+                int parentIndex = GetParentIndex(newNodeIndex);
+                HeapNode node = numbers[newNodeIndex];
+                positions[node.Index] = newNodeIndex;
+                while (parentIndex >= 0 && numbers[newNodeIndex].Distance < numbers[parentIndex].Distance)
+                {
+                    Swap(newNodeIndex, parentIndex);
+                    newNodeIndex = parentIndex;
+                    parentIndex = GetParentIndex(newNodeIndex);
+                }
+            }
+        }
+
+        public bool IsInHeap(int v)
+        {
+            return positions[v] < this.size + 1 ? true : false;
+        }
+
+        public void DecreaseKey(int v, int dist)
+        {
+            numbers[positions[v]] = new HeapNode() { Index = v, Distance = dist };
+            int decreasedNodeIndex = positions[v];
+            int parentIndex = GetParentIndex(decreasedNodeIndex);
+            while (parentIndex >= 0 && numbers[decreasedNodeIndex].Distance < numbers[parentIndex].Distance)
+            {
+                Swap(decreasedNodeIndex, parentIndex);
+                decreasedNodeIndex = parentIndex;
+                parentIndex = GetParentIndex(decreasedNodeIndex);
+            }
+        }
+
+        public int Delete()
+        {
+            int root = numbers[0].Index;
+            int indexToSwitch = 0;
+            int leftIndex = GetLeftChildIndex(indexToSwitch);
+            int rightIndex = GetRightChildIndex(indexToSwitch);
+            int newSize = size - 1;
+            numbers[0] = numbers[newSize];
+            while (leftIndex < newSize && (numbers[indexToSwitch].Distance > numbers[leftIndex].Distance || numbers[indexToSwitch].Distance > numbers[rightIndex].Distance))
+            {
+                if (numbers[leftIndex].Distance < numbers[rightIndex].Distance)
+                {
+                    Swap(indexToSwitch, leftIndex);
+                    indexToSwitch = leftIndex;
+                }
+                else
+                {
+                    Swap(indexToSwitch, rightIndex);
+                    indexToSwitch = rightIndex;
+                }
+
+                leftIndex = GetLeftChildIndex(indexToSwitch);
+                rightIndex = GetRightChildIndex(indexToSwitch);
+            }
+
+            size = newSize;
+            newSize--;
+            return root;
+        }
+
+
+        private int GetLeftChildIndex(int parentIndex)
+        {
+            return (parentIndex << 1) + 1;
+        }
+
+        private int GetRightChildIndex(int parentIndex)
+        {
+            return (parentIndex << 1) + 2;
+        }
+
+        private int GetParentIndex(int childIndex)
+        {
+            return (childIndex - 1) >> 1;
+        }
+
+        private void Swap(int index1, int index2)
+        {
+            positions[numbers[index1].Index] = index2;
+            positions[numbers[index2].Index] = index1;
+            HeapNode temp = numbers[index1];
+            numbers[index1] = numbers[index2];
+            numbers[index2] = temp;
+        }
+
+    }
+
+
 }
