@@ -429,7 +429,9 @@ namespace GraphVisualizer
             int leftIndex = GetLeftChildIndex(indexToSwitch);
             int rightIndex = GetRightChildIndex(indexToSwitch);
             int newSize = size - 1;
+            positions[numbers[0].Index] = newSize;
             numbers[0] = numbers[newSize];
+            positions[numbers[0].Index] = 0;
             while (leftIndex < newSize && (numbers[indexToSwitch].Distance > numbers[leftIndex].Distance || numbers[indexToSwitch].Distance > numbers[rightIndex].Distance))
             {
                 if (numbers[leftIndex].Distance < numbers[rightIndex].Distance)
