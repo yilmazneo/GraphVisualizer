@@ -1,9 +1,0 @@
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\bin\Debug\GraphVisualizer.exe.config
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\bin\Debug\GraphVisualizer.exe
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\bin\Debug\GraphVisualizer.pdb
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\obj\Debug\GraphVisualizer.csprojResolveAssemblyReference.cache
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\obj\Debug\GraphVisualizer.Properties.Resources.resources
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\obj\Debug\GraphVisualizer.csproj.GenerateResource.Cache
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\obj\Debug\GraphVisualizer.exe
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\obj\Debug\GraphVisualizer.pdb
-C:\WorkSpace\PROJECTS\GraphVisualizer\GraphVisualizer\obj\Debug\GraphVisualizer.Form1.resources
